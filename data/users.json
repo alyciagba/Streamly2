@@ -1,0 +1,17 @@
+{
+    "alycia": {
+        "nome": "Alycia Tasla",
+        "senha": "12345",
+        "foto": "images/perfil.png"
+    },
+    "Evely Thamires": {
+        "nome": "Evely Thamires",
+        "senha": "12345",
+        "foto": "images/perfil.png"
+    },
+    "Fulano Ciclano": {
+        "nome": "Fulano Ciclano",
+        "senha": "12345",
+        "foto": "images/perfil.png"
+    }
+}

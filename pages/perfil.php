@@ -1,0 +1,50 @@
+<?php
+session_start();
+
+// Do not redirect guests; allow profile page to show a message when not logged in
+$nomeUsuario = $_SESSION['usuario'] ?? null;
+$fotoUsuario = $_SESSION['foto'] ?? 'default.jpg';
+?>
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Perfil - Streamly</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <script src="../js/script.js" defer></script>
+</head>
+<body>
+
+<?php include '../includes/header.php'; ?>
+
+<main class="p-8">
+    <section id="profile-section" class="max-w-lg mx-auto bg-white p-6 rounded shadow-md">
+        <div class="flex items-center gap-4 mb-4">
+            <img src="<?= htmlspecialchars($fotoUsuario) ?>" alt="Foto do Usuário" class="w-20 h-20 rounded-full object-cover">
+            <span id="profile-username" class="text-xl font-semibold"><?= htmlspecialchars($nomeUsuario ?? 'Convidado') ?></span>
+        </div>
+        <?php if ($nomeUsuario): ?>
+            <p>Bem-vindo(a) ao seu perfil, <?= htmlspecialchars($nomeUsuario) ?>!</p>
+            <div id="profile-info" class="mt-4"></div>
+        <?php else: ?>
+            <p>Você não está logado. <a href="login.php">Entrar</a> para ver seu perfil e seus filmes.</p>
+        <?php endif; ?>
+    </section>
+
+    <script>
+        // Expose currentUser for client-side code (used to control add/rank permissions)
+        <?php if ($nomeUsuario): ?>
+        window.currentUser = <?= json_encode($nomeUsuario) ?>;
+        // Ensure localStorage has the username key (used by per-user lists)
+        try {
+            if (!localStorage.getItem('usuario')) localStorage.setItem('usuario', <?= json_encode($nomeUsuario) ?>);
+        } catch (e) {}
+        <?php endif; ?>
+    </script>
+</main>
+
+<?php include '../includes/footer.php'; ?>
+
+</body>
+</html>
