@@ -44,7 +44,9 @@ section {
     box-shadow: 0 2px 12px rgba(0,0,0,0.18);
 }
 #login-section, #profile-section {
-    max-width: 400px;
+    /* Allow profile section to expand so the movie grid can show 3 columns */
+    max-width: 1100px;
+    width: 100%;
     margin: 2rem auto;
     background: #182447;
     padding: 2rem;
