@@ -90,8 +90,8 @@ button:hover {
 }
 .movie-list {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 2rem;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1.5rem;
     margin: 2rem 0;
     width: 100%;
     max-width: 1400px;
@@ -99,16 +99,16 @@ button:hover {
     margin-right: auto;
 }
 .movie-card {
-    background: #1a2540;
+    background: linear-gradient(180deg,#122033 0%, #182447 100%);
     border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+    box-shadow: 0 6px 18px rgba(8,12,30,0.6);
     width: 100%;
-    padding: 1rem;
+    padding: 0.9rem;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: flex-start;
-    transition: box-shadow 0.2s, transform 0.2s;
+    transition: box-shadow 0.2s, transform 0.16s;
 }
 .movie-card:hover {
     transform: translateY(-4px) scale(1.03);
@@ -161,15 +161,49 @@ button.detalhes:hover {
     padding-left: 0;
     list-style: none;
 }
-.profile-movies li {
-    margin-bottom: 1rem;
-    background: #1a2540;
-    padding: 1rem;
-    border-radius: 8px;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+
+/* Grid for profile watched movies: 3 per row */
+.profile-movies-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-top: 1rem;
 }
-.profile-movies span {
-    font-size: 1.2rem;
+.profile-movies-grid .movie-item {
+    background: linear-gradient(180deg,#0f2033, #15243a);
+    padding: 0.5rem;
+    border-radius: 10px;
+    display:flex;
+    flex-direction:row;
+    align-items:center;
+    gap:0.75rem;
+    box-shadow: 0 4px 12px rgba(5,8,20,0.6);
+    min-height: 120px;
+}
+.profile-movies-grid .movie-item img {
+    width:80px;
+    height:120px;
+    object-fit:cover;
+    border-radius:6px;
+    flex: 0 0 80px;
+}
+.profile-movies-grid .movie-item .title {
+    color: #cfe9ff;
+    font-weight:600;
+    text-align:left;
+}
+.profile-movies-grid .movie-item .controls {
+    display:flex;
+    gap:0.4rem;
+    align-items:center;
+}
+
+/* make profile responsive */
+@media (max-width: 900px) {
+    .profile-movies-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 600px) {
+    .profile-movies-grid { grid-template-columns: 1fr; }
 }
 footer {
     text-align: center;

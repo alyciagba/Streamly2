@@ -208,25 +208,64 @@ function renderLists() {
             el.innerHTML = '<p>Você ainda não tem listas criadas.</p>';
             return;
         }
+
+        // If rendering into the perfil container, only show list names and counts
+        // (no movie entries). Full detail (with posters and remove buttons) is
+        // shown only on the listas page (`#listas-page`).
+        const isPerfilContainer = el.id === 'listas-container';
+
         let html = '<div class="user-lists">';
         listas.forEach((l, idx) => {
-            html += `<div class="user-list" style="border:1px solid #233a6a;padding:0.6rem;border-radius:8px;margin-bottom:0.6rem;">
-                <div style="display:flex;justify-content:space-between;align-items:center;">
-                    <strong>${escapeHtml(l.name)}</strong>
+            if (isPerfilContainer) {
+                html += `<div class="user-list" style="border:1px solid #233a6a;padding:0.6rem;border-radius:8px;margin-bottom:0.6rem;display:flex;justify-content:space-between;align-items:center;">
+                    <div style="display:flex;flex-direction:column;">
+                        <strong>${escapeHtml(l.name)}</strong>
+                        <small style="color:#cfe1ff;margin-top:0.25rem;">${l.filmes.length} filme(s)</small>
+                    </div>
                     <div>
                         <button class="edit-list-btn" data-idx="${idx}" style="background:#233a6a;color:#fff;border:none;padding:0.25rem 0.5rem;border-radius:6px;margin-right:0.4rem;">Editar</button>
-                        <button class="del-list-btn" data-idx="${idx}" style="background:#ff4444;color:#fff;border:none;padding:0.25rem 0.5rem;border-radius:6px;margin-right:0.4rem;">Excluir</button>
+                        <button class="del-list-btn" data-idx="${idx}" style="background:#ff4444;color:#fff;border:none;padding:0.25rem 0.5rem;border-radius:6px;">Excluir</button>
                     </div>
-                </div>
-                <div style="margin-top:0.5rem;">
-                    ${l.filmes.length === 0 ? '<small>Nenhum filme nesta lista.</small>' : '<ul>' + l.filmes.map(f => `<li style="display:flex;justify-content:space-between;align-items:center;"><span>${escapeHtml(f)}</span><button class="remove-movie-from-list" data-list="${idx}" data-movie="${escapeHtml(f)}" style="background:#d23;color:#fff;border:none;padding:0.15rem 0.4rem;border-radius:6px;">Remover</button></li>`).join('') + '</ul>'}
-                </div>
-            </div>`;
+                </div>`;
+            } else {
+                html += `<div class="user-list" style="border:1px solid #233a6a;padding:0.6rem;border-radius:8px;margin-bottom:0.6rem;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <strong>${escapeHtml(l.name)}</strong>
+                        <div>
+                            <button class="edit-list-btn" data-idx="${idx}" style="background:#233a6a;color:#fff;border:none;padding:0.25rem 0.5rem;border-radius:6px;margin-right:0.4rem;">Editar</button>
+                            <button class="del-list-btn" data-idx="${idx}" style="background:#ff4444;color:#fff;border:none;padding:0.25rem 0.5rem;border-radius:6px;margin-right:0.4rem;">Excluir</button>
+                        </div>
+                    </div>
+                    <div style="margin-top:0.5rem;">
+                        ${l.filmes.length === 0 ? '<small>Nenhum filme nesta lista.</small>' : '<ul style="list-style:none;padding:0;margin:0;">' + l.filmes.map(f => {
+                            // find poster and rating for this title
+                            const stored = JSON.parse(localStorage.getItem(getChaveFilmesUsuario())) || [];
+                            const watched = stored.find(w => w.titulo === f) || {};
+                            const movieObj = filmes.find(m => m.titulo === f) || {};
+                            const posterPath = resolvePosterPath(movieObj.poster || 'images/jovememchamas.jpg.avif');
+                            const rating = watched.ranking || 0;
+                            const stars = [1,2,3,4,5].map(i => `<span style="color:${i<=rating? '#ffd700':'#6b7280'};font-size:0.9rem;">&#9733;</span>`).join('');
+                            return `<li style="display:flex;justify-content:space-between;align-items:center;padding:0.35rem 0;border-bottom:1px solid rgba(255,255,255,0.03);">
+                                        <div style="display:flex;gap:0.6rem;align-items:center;">
+                                            <img src="${posterPath}" alt="${escapeHtml(f)}" style="width:50px;height:75px;object-fit:cover;border-radius:4px;"/>
+                                            <div style="min-width:180px;max-width:300px;">
+                                                <div style="font-weight:600;">${escapeHtml(f)}</div>
+                                                <div style="margin-top:0.25rem;">${stars}</div>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <button class="remove-movie-from-list" data-list="${idx}" data-movie="${escapeHtml(f)}" style="background:#d23;color:#fff;border:none;padding:0.25rem 0.6rem;border-radius:6px;">Remover</button>
+                                        </div>
+                                    </li>`;
+                        }).join('') + '</ul>'}
+                    </div>
+                </div>`;
+            }
         });
         html += '</div>';
         el.innerHTML = html;
 
-        // attach delete/list remove handlers
+        // attach edit/delete handlers (present in both perfil and listas views)
         el.querySelectorAll('.edit-list-btn').forEach(b => b.addEventListener('click', () => {
             const idx = parseInt(b.getAttribute('data-idx'));
             const listasLocal = loadListsForUser();
@@ -242,6 +281,7 @@ function renderLists() {
             if (confirm('Excluir esta lista?')) deleteList(idx);
         }));
 
+        // attach remove-movie handlers only if movie entries were rendered
         el.querySelectorAll('.remove-movie-from-list').forEach(b => b.addEventListener('click', () => {
             const listIdx = parseInt(b.getAttribute('data-list'));
             const movieTitle = b.getAttribute('data-movie');
@@ -416,26 +456,26 @@ function atualizarPerfil() {
     if (filmesAssistidos.length === 0) {
         html += '<p>Nenhum filme adicionado ainda.</p>';
     } else {
-        html += '<div class="profile-movies">';
+        // Render watched movies side-by-side using the CSS grid (.profile-movies-grid)
+        html += '<div class="profile-movies-grid">';
         filmesAssistidos.forEach((f, idx) => {
-            // try to find poster by searching filmes array
             const found = filmes.find(x => x.titulo === f.titulo) || {};
             const poster = resolvePosterPath(found.poster || 'images/jovememchamas.jpg.avif');
             const rating = f.ranking || 0;
             html += `
-                <div class="movie-card" style="display:flex;gap:1rem;align-items:center;">
-                    <img src="${poster}" alt="${f.titulo}" style="width:80px;height:120px;object-fit:cover;border-radius:6px;" />
-                    <div style="flex:1;">
-                        <strong>${f.titulo}</strong>
-                        <div class="star-rating" data-idx="${idx}">
+                <div class="movie-item" style="max-width:360px;">
+                    <img src="${poster}" alt="${escapeHtml(f.titulo)}" style="width:80px;height:120px;object-fit:cover;border-radius:6px;flex:0 0 80px;" />
+                    <div style="display:flex;flex-direction:column;flex:1;min-width:0;">
+                        <div class="title">${escapeHtml(f.titulo)}</div>
+                        <div class="movie-comment" style="margin-top:6px;color:#dfeffc;">${f.comment ? `<em>${escapeHtml(f.comment)}</em>` : '<small>Nenhum comentário.</small>'}</div>
+                        <div class="star-rating" data-idx="${idx}" style="margin-top:6px;">
                             ${[1,2,3,4,5].map(i => `<span class="star ${i<=rating? 'filled':''}" data-star="${i}">&#9733;</span>`).join('')}
                         </div>
-                        <div style="margin-top:0.5rem;display:flex;gap:0.5rem;align-items:center;">
-                            <button class="remover-btn" data-idx="${idx}" style="background:#ff4444;color:#fff;border:none;padding:0.4rem 0.6rem;border-radius:6px;">Remover</button>
-                            <button class="edit-comment-btn" data-idx="${idx}" style="background:#233a6a;color:#fff;border:none;padding:0.4rem 0.6rem;border-radius:6px;">Editar comentário</button>
-                            <button class="add-to-list-btn" data-idx="${idx}" style="background:#1e90ff;color:#fff;border:none;padding:0.4rem 0.6rem;border-radius:6px;">Adicionar à lista</button>
+                        <div class="controls" style="margin-top:8px;display:flex;gap:0.4rem;align-items:center;">
+                            <button class="remover-btn" data-idx="${idx}" style="background:#ff4444;color:#fff;border:none;padding:0.35rem 0.6rem;border-radius:6px;">Remover</button>
+                            <button class="edit-comment-btn" data-idx="${idx}" style="background:#233a6a;color:#fff;border:none;padding:0.35rem 0.6rem;border-radius:6px;">Editar</button>
+                            <button class="add-to-list-btn" data-idx="${idx}" style="background:#1e90ff;color:#fff;border:none;padding:0.35rem 0.6rem;border-radius:6px;">Adicionar à lista</button>
                         </div>
-                        <div class="movie-comment" style="margin-top:0.5rem;color:#dfeffc;">${f.comment ? `<em>${escapeHtml(f.comment)}</em>` : '<small>Nenhum comentário.</small>'}</div>
                     </div>
                 </div>
             `;
