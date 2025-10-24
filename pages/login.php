@@ -3,7 +3,6 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// Caminho do arquivo JSON de usuários
 $usuariosPath = __DIR__ . '/../data/users.json';
 $usuariosJson = file_exists($usuariosPath) ? file_get_contents($usuariosPath) : '[]';
 $usuarios = json_decode($usuariosJson, true);
@@ -14,7 +13,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $usuario = $_POST['usuario'] ?? '';
     $senha = $_POST['senha'] ?? '';
 
-    // Busca usuário no JSON
     $usuarioEncontrado = null;
     foreach ($usuarios as $u) {
         if ($u['nome'] === $usuario && $u['senha'] === $senha) {
@@ -27,7 +25,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $_SESSION['usuario'] = $usuarioEncontrado['nome'];
         $_SESSION['foto'] = $usuarioEncontrado['foto'] ?? 'default.jpg';
 
-        // Include and render the profile page directly to avoid redirect issues.
         include 'perfil.php';
         exit;
     } else {

@@ -3,6 +3,16 @@ if (session_status() === PHP_SESSION_NONE) {
   session_start();
 }
 $usuarioLogado = $_SESSION['usuario'] ?? 'Convidado';
+
+
+$jsonPath = __DIR__ . '/../data/filmes.json';
+if (file_exists($jsonPath)) {
+    $raw = file_get_contents($jsonPath);
+    $decoded = json_decode($raw, true);
+    if (is_array($decoded)) {
+        $filmes = $decoded;
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="pt-br">
@@ -12,13 +22,15 @@ $usuarioLogado = $_SESSION['usuario'] ?? 'Convidado';
   <title>Detalhes do Filme - Streamly</title>
   <link rel="stylesheet" href="../css/styles.css">
   <script src="https://cdn.tailwindcss.com"></script>
+  
+</head>
+<body>
   <?php include '../includes/header.php'; ?>
   <?php if (!empty($usuarioLogado) && $usuarioLogado !== 'Convidado'): ?>
   <script>
-      window.currentUser = <?= json_encode($usuarioLogado) ?>;
+    window.currentUser = <?= json_encode($usuarioLogado) ?>;
   </script>
   <?php endif; ?>
-    
 
   <main class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
     <div class="bg-[#1a2a40] p-6 rounded-lg shadow-md">
@@ -39,6 +51,7 @@ $usuarioLogado = $_SESSION['usuario'] ?? 'Convidado';
 
   </main>
 
+  <?php include '../includes/footer.php'; ?>
   <script src="../js/script.js" defer></script>
 </body>
 </html>

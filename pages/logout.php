@@ -2,7 +2,6 @@
 if (session_status() === PHP_SESSION_NONE) {
 	session_start();
 }
-// Clear session data and destroy session
 $_SESSION = [];
 if (ini_get("session.use_cookies")) {
 	$params = session_get_cookie_params();
@@ -13,7 +12,6 @@ if (ini_get("session.use_cookies")) {
 }
 session_destroy();
 
-// Redirect to the site root
 header("Location: http://localhost/Streamly/index.php");
 exit;
 ?>

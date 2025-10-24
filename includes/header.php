@@ -1,24 +1,18 @@
 <?php
-// Inicia a sessão se ainda não tiver sido iniciada
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// Nome do usuário logado ou "Convidado"
 $usuarioLogado = $_SESSION['usuario'] ?? 'Convidado';
 
-// Função para corrigir caminhos dependendo da pasta
 function linkPath($path) {
-    // Detecta se o arquivo atual está dentro da pasta pages
-    $currentDir = basename(__DIR__); // "includes"
-    $parentDir = basename(dirname(__DIR__)); // "Streamly"
+    $currentDir = basename(__DIR__); 
+    $parentDir = basename(dirname(__DIR__)); 
     
-    // Se estiver em includes dentro de pages, volta 2 níveis; se estiver na raiz, apenas 1
     $fullPath = dirname(__DIR__) . '/' . ltrim($path, '/');
     return $fullPath;
 }
 
-// Compute relative links so header works when included from root or from /pages/
 $inPages = strpos($_SERVER['PHP_SELF'], '/pages/') !== false;
 if ($inPages) {
     $homeLink = '../index.php';
@@ -39,7 +33,7 @@ if ($inPages) {
 }
 ?>
 
-<header class="flex justify-between items-center p-4 bg-blue-800 text-white" style="background-color:#16213e;color:#ffffff;padding:1rem;display:flex;justify-content:space-between;align-items:center;">
+<header class="site-header">
     <span class="text-2xl font-bold tracking-wide">Streamly</span>
     <nav class="space-x-4">
         <a href="<?= $homeLink ?>" class="hover:underline">Home</a>
@@ -55,3 +49,12 @@ if ($inPages) {
         <?php endif; ?>
     </nav>
 </header>
+<?php
+if (isset($filmes) && is_array($filmes)):
+?>
+<script>
+    try {
+        window.filmes = <?= json_encode($filmes, JSON_UNESCAPED_UNICODE) ?>;
+    } catch (e) {}
+</script>
+<?php endif; ?>

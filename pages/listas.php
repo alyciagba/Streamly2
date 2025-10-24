@@ -1,5 +1,4 @@
 <?php
-// Página Listas
 if (session_status() === PHP_SESSION_NONE) {
 	session_start();
 }
@@ -26,9 +25,9 @@ $fotoUsuario = $_SESSION['foto'] ?? 'default.jpg';
 		<div id="listas-page">
 			<p>Aqui você pode ver suas listas de filmes.</p>
 			<?php if ($nomeUsuario): ?>
-				<div style="margin-top:1rem;display:flex;gap:0.5rem;align-items:center;">
-					<select id="adicionar-filme-lista" style="padding:0.4rem;border-radius:6px;background:#0f1724;color:#e0e6f0;border:1px solid #233a6a;"></select>
-					<input id="adicionar-filme-nome" type="text" placeholder="Título do filme" style="padding:0.4rem;border-radius:6px;background:#0f1724;color:#e0e6f0;border:1px solid #233a6a;flex:1;" />
+				<div class="hstack mt-1">
+					<select id="adicionar-filme-lista" class="form-input"></select>
+					<input id="adicionar-filme-nome" type="text" placeholder="Título do filme" class="form-input flex-grow" />
 					<button id="adicionar-filme-btn" class="bg-blue-600 text-white px-3 py-1 rounded">Adicionar</button>
 				</div>
 			<?php else: ?>
