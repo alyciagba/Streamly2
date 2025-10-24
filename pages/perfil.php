@@ -6,6 +6,15 @@ if (session_status() === PHP_SESSION_NONE) {
 // Do not redirect guests; allow profile page to show a message when not logged in
 $nomeUsuario = $_SESSION['usuario'] ?? null;
 $fotoUsuario = $_SESSION['foto'] ?? 'default.jpg';
+// Normalize foto path so pages/perfil.php points to the correct images folder
+$fotoPath = $fotoUsuario;
+if (!preg_match('#^https?://#i', $fotoUsuario) && strpos($fotoUsuario, '/') === false) {
+    // simple filename like 'perfil.png' -> ../images/perfil.png
+    $fotoPath = '../images/' . $fotoUsuario;
+} elseif (!preg_match('#^https?://#i', $fotoUsuario) && strpos($fotoUsuario, 'images/') === 0) {
+    // already 'images/...' -> prefix with ../ because we're in /pages/
+    $fotoPath = '../' . $fotoUsuario;
+}
 ?>
 <!DOCTYPE html>
 <html lang="pt-br">
@@ -22,8 +31,8 @@ $fotoUsuario = $_SESSION['foto'] ?? 'default.jpg';
 
 <main class="p-8">
     <section id="profile-section" class="max-w-lg mx-auto bg-white p-6 rounded shadow-md">
-        <div class="flex items-center gap-4 mb-4">
-            <img src="<?= htmlspecialchars($fotoUsuario) ?>" alt="Foto do Usuário" class="w-20 h-20 rounded-full object-cover">
+            <div class="flex items-center gap-4 mb-4">
+            <img src="<?= htmlspecialchars($fotoPath) ?>" alt="Foto do Usuário" style="width:80px;height:80px;border-radius:50%;object-fit:cover;display:block;" />
             <span id="profile-username" class="text-xl font-semibold"><?= htmlspecialchars($nomeUsuario ?? 'Convidado') ?></span>
         </div>
         <?php if ($nomeUsuario): ?>
