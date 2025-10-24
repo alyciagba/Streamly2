@@ -83,6 +83,17 @@ function getChaveFilmesUsuario() {
     return `filmesAssistidos_${getUsuario()}`;
 }
 
+// Simple HTML escape to prevent injection when rendering stored comments
+function escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
 // Note: Server-side PHP sessions now control login state. The client-side
 // localStorage-based login and navbar toggling were removed so form submission
 // and PHP session handling operate without interference.
@@ -113,9 +124,11 @@ function atualizarPerfil() {
                         <div class="star-rating" data-idx="${idx}">
                             ${[1,2,3,4,5].map(i => `<span class="star ${i<=rating? 'filled':''}" data-star="${i}">&#9733;</span>`).join('')}
                         </div>
-                        <div style="margin-top:0.5rem;">
+                        <div style="margin-top:0.5rem;display:flex;gap:0.5rem;align-items:center;">
                             <button class="remover-btn" data-idx="${idx}" style="background:#ff4444;color:#fff;border:none;padding:0.4rem 0.6rem;border-radius:6px;">Remover</button>
+                            <button class="edit-comment-btn" data-idx="${idx}" style="background:#233a6a;color:#fff;border:none;padding:0.4rem 0.6rem;border-radius:6px;">Editar comentário</button>
                         </div>
+                        <div class="movie-comment" style="margin-top:0.5rem;color:#dfeffc;">${f.comment ? `<em>${escapeHtml(f.comment)}</em>` : '<small>Nenhum comentário.</small>'}</div>
                     </div>
                 </div>
             `;
@@ -130,6 +143,19 @@ function atualizarPerfil() {
         btn.addEventListener('click', () => {
             const idx = parseInt(btn.getAttribute('data-idx'));
             filmesAssistidos.splice(idx,1);
+            localStorage.setItem(getChaveFilmesUsuario(), JSON.stringify(filmesAssistidos));
+            atualizarPerfil();
+        });
+    });
+
+    const editButtons = profileInfo.querySelectorAll('.edit-comment-btn');
+    editButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const idx = parseInt(btn.getAttribute('data-idx'));
+            const current = filmesAssistidos[idx] && filmesAssistidos[idx].comment ? filmesAssistidos[idx].comment : '';
+            const novo = prompt('Escreva seu comentário para este filme:', current);
+            if (novo === null) return; // cancelado
+            filmesAssistidos[idx].comment = novo.trim();
             localStorage.setItem(getChaveFilmesUsuario(), JSON.stringify(filmesAssistidos));
             atualizarPerfil();
         });
@@ -156,7 +182,16 @@ if (document.getElementById('profile-username') && document.getElementById('prof
 // Detalhes do filme (filmes.html)
 const urlParams = new URLSearchParams(window.location.search);
 const movieId = urlParams.get('id');
-const filme = filmes.find(f => f.id === movieId);
+let filme = filmes.find(f => f.id === movieId);
+
+// Fallback: if film not found by id (some links may omit id), try to find by page title
+if (!filme) {
+    const tituloEl = document.getElementById('titulo');
+    const pageTitle = tituloEl ? tituloEl.textContent.trim() : '';
+    if (pageTitle) {
+        filme = filmes.find(f => f.titulo === pageTitle) || null;
+    }
+}
 
 if (filme) {
     const tituloEl = document.getElementById('titulo');
@@ -189,7 +224,10 @@ if (btnAdicionar) {
 
         let assistidos = JSON.parse(localStorage.getItem(getChaveFilmesUsuario())) || [];
         if (!assistidos.some(f => f.titulo === filme.titulo)) {
-            assistidos.push({ titulo: filme.titulo, ranking: 0 });
+            // Ask user for an optional comment when adding
+            let comentario = prompt('Adicionar um comentário sobre este filme (opcional):', '');
+            comentario = comentario === null ? '' : comentario.trim();
+            assistidos.push({ titulo: filme.titulo, ranking: 0, comment: comentario });
             localStorage.setItem(getChaveFilmesUsuario(), JSON.stringify(assistidos));
             alert("Filme adicionado ao perfil!");
         } else {
@@ -219,7 +257,7 @@ if (btnRankear) {
         if (idx >= 0) {
             assistidos[idx].ranking = ranking;
         } else {
-            assistidos.push({ titulo: filme.titulo, ranking });
+            assistidos.push({ titulo: filme.titulo, ranking, comment: '' });
         }
         localStorage.setItem(getChaveFilmesUsuario(), JSON.stringify(assistidos));
         alert(`Você deu ${ranking} estrelas para ${filme.titulo}`);

@@ -1,5 +1,7 @@
 <?php
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+	session_start();
+}
 // Clear session data and destroy session
 $_SESSION = [];
 if (ini_get("session.use_cookies")) {

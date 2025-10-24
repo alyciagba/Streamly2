@@ -1,5 +1,7 @@
 <?php
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
 // Caminho do arquivo JSON de usuários
 $usuariosPath = __DIR__ . '/../data/users.json';

@@ -1,5 +1,7 @@
 <?php
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
 // Do not redirect guests; allow profile page to show a message when not logged in
 $nomeUsuario = $_SESSION['usuario'] ?? null;
