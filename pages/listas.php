@@ -17,7 +17,9 @@
 <main class="p-8">
 	<section class="max-w-3xl mx-auto bg-white p-6 rounded shadow-md">
 		<h2 class="text-2xl font-bold mb-4">Listas de Filmes</h2>
-		<p>Aqui você pode ver suas listas de filmes.</p>
+		<div id="listas-page">
+			<p>Aqui você pode ver suas listas de filmes.</p>
+		</div>
 	</section>
 </main>
 

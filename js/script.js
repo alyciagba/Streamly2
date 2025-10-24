@@ -127,6 +127,7 @@ function atualizarPerfil() {
                         <div style="margin-top:0.5rem;display:flex;gap:0.5rem;align-items:center;">
                             <button class="remover-btn" data-idx="${idx}" style="background:#ff4444;color:#fff;border:none;padding:0.4rem 0.6rem;border-radius:6px;">Remover</button>
                             <button class="edit-comment-btn" data-idx="${idx}" style="background:#233a6a;color:#fff;border:none;padding:0.4rem 0.6rem;border-radius:6px;">Editar comentário</button>
+                            <button class="add-to-list-btn" data-idx="${idx}" style="background:#1e90ff;color:#fff;border:none;padding:0.4rem 0.6rem;border-radius:6px;">Adicionar à lista</button>
                         </div>
                         <div class="movie-comment" style="margin-top:0.5rem;color:#dfeffc;">${f.comment ? `<em>${escapeHtml(f.comment)}</em>` : '<small>Nenhum comentário.</small>'}</div>
                     </div>
@@ -215,8 +216,11 @@ const btnRankear = document.getElementById('rankear');
 
 if (btnAdicionar) {
     btnAdicionar.addEventListener('click', () => {
-        if (!filme) return;
+        // Debug: log when add button is clicked to help diagnose missing prompt
+        console.log('DEBUG: adicionar clicked', { filme, pageTitle: document.getElementById('titulo')?.textContent, urlId: movieId });
+        if (!filme) { console.log('DEBUG: no filme object found, aborting add'); return; }
         const usuario = getUsuario();
+        console.log('DEBUG: currentUser', usuario);
         if (!usuario || usuario === 'Convidado') {
             alert('Você precisa estar logado para adicionar filmes ao perfil.');
             return;
@@ -239,8 +243,11 @@ if (btnAdicionar) {
 
 if (btnRankear) {
     btnRankear.addEventListener('click', () => {
-        if (!filme) return;
+        // Debug: log when rank button is clicked
+        console.log('DEBUG: rankear clicked', { filme, pageTitle: document.getElementById('titulo')?.textContent, urlId: movieId });
+        if (!filme) { console.log('DEBUG: no filme object found, aborting rank'); return; }
         const usuario = getUsuario();
+        console.log('DEBUG: currentUser', usuario);
         if (!usuario || usuario === 'Convidado') {
             alert('Você precisa estar logado para rankear filmes.');
             return;

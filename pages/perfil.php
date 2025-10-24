@@ -29,6 +29,16 @@ $fotoUsuario = $_SESSION['foto'] ?? 'default.jpg';
         <?php if ($nomeUsuario): ?>
             <p>Bem-vindo(a) ao seu perfil, <?= htmlspecialchars($nomeUsuario) ?>!</p>
             <div id="profile-info" class="mt-4"></div>
+            
+            <!-- Listas: criar nova lista e mostrar listas do usuário -->
+            <div id="listas-section" class="mt-6">
+                <h3 class="text-lg font-semibold mb-2">Suas Listas</h3>
+                <div style="display:flex;gap:0.5rem;align-items:center;margin-bottom:0.5rem;">
+                    <input id="nova-lista-nome" type="text" placeholder="Nome da nova lista" style="padding:0.4rem;border-radius:6px;background:#0f1724;color:#e0e6f0;border:1px solid #233a6a;" />
+                    <button id="criar-lista-btn" class="bg-blue-600 text-white px-3 py-1 rounded">Criar lista</button>
+                </div>
+                <div id="listas-container"></div>
+            </div>
         <?php else: ?>
             <p>Você não está logado. <a href="login.php">Entrar</a> para ver seu perfil e seus filmes.</p>
         <?php endif; ?>

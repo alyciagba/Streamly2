@@ -27,6 +27,7 @@ if ($inPages) {
     $perfilLink = 'perfil.php';
     $loginLink = 'login.php';
     $logoutLink = 'logout.php';
+    $listasLink = 'listas.php';
 } else {
     $homeLink = 'index.php';
     $sobreLink = 'pages/sobre.php';
@@ -34,6 +35,7 @@ if ($inPages) {
     $perfilLink = 'pages/perfil.php';
     $loginLink = 'pages/login.php';
     $logoutLink = 'pages/logout.php';
+    $listasLink = 'pages/listas.php';
 }
 ?>
 
@@ -41,10 +43,11 @@ if ($inPages) {
     <span class="text-2xl font-bold tracking-wide">Streamly</span>
     <nav class="space-x-4">
         <a href="<?= $homeLink ?>" class="hover:underline">Home</a>
-        <a href="<?= $sobreLink ?>" class="hover:underline">Sobre</a>
-        <a href="<?= $contatoLink ?>" class="hover:underline">Contato</a>
+    <a href="<?= $sobreLink ?>" class="hover:underline">Sobre</a>
+    <a href="<?= $contatoLink ?>" class="hover:underline">Contato</a>
+    <a href="<?= $listasLink ?? ($inPages ? 'listas.php' : 'pages/listas.php') ?>" class="hover:underline">Listas</a>
 
-        <a href="<?= $perfilLink ?>" class="hover:underline">Perfil</a>
+    <a href="<?= $perfilLink ?>" class="hover:underline">Perfil</a>
         <?php if ($usuarioLogado !== 'Convidado'): ?>
             <a id="nav-logout" href="<?= $logoutLink ?>" class="hover:underline">Logout (<?= htmlspecialchars($usuarioLogado) ?>)</a>
         <?php else: ?>
