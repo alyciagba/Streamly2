@@ -95,14 +95,8 @@ $filmes = [
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="css/styles.css">
     <script src="js/script.js" defer></script>
-    <style>
-        .movie-card { background:#1a2a40; color:#fff; padding:1rem; border-radius:0.5rem; width:14rem; }
-        .movie-card img { width:100%; border-radius:0.5rem; }
-        .star { color: gray; }
-        .star.filled { color: gold; }
-    </style>
 </head>
-<body class="bg-gray-100">
+<body>
 
 <!-- HEADER -->
 <?php include 'includes/header.php'; ?>
@@ -110,7 +104,7 @@ $filmes = [
 <!-- CONTEÚDO PRINCIPAL -->
 <main class="p-8">
     <h2 class="text-center text-4xl font-bold my-8">Seja bem-vindo ao Streamly, <?= htmlspecialchars($usuarioLogado) ?>!</h2>
-    <div id="filmes-container" class="flex flex-wrap justify-center gap-6">
+    <div id="filmes-container" class="movie-list">
         <?php foreach($filmes as $filme): ?>
             <div class="movie-card">
                 <img src="<?= htmlspecialchars($filme['poster']) ?>" alt="Capa do filme">
