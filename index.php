@@ -33,7 +33,7 @@ $filmes = [
     [
         'id' => '3',
         'titulo' => 'Cisne Negro',
-    'poster' => 'images/cisnenegro.jpg',
+        'poster' => 'images/cisnenegro.jpg',
         'diretor' => 'Diretor: Darren Aronofsky',
         'anolancamento' => 'Ano de Lançamento: 2010',
         'descricao' => 'Nina Sayers é dominada por um sentimento de imensa pressão quando se vê competindo pelo papel. Ela perde o controle da realidade e mergulha na loucura.',
@@ -78,7 +78,7 @@ $filmes = [
     [
         'id' => '8',
         'titulo' => 'A Substância',
-    'poster' => 'images/asubstanci.jpg.jpg',
+        'poster' => 'images/asubstanci.jpg.jpg',
         'diretor' => 'Diretora: Coralie Fargeat',
         'anolancamento' => 'Ano de Lançamento: 2024',
         'descricao' => 'Elisabeth Sparkle, renomada por um programa de aeróbica, enfrenta um golpe devastador quando seu chefe a demite. Um laboratório oferece uma substância que promete transformá-la em uma versão aprimorada.',

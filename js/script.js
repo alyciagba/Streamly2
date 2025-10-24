@@ -94,9 +94,315 @@ function escapeHtml(str) {
         .replace(/'/g, '&#39;');
 }
 
+// Resolve poster paths so pages in /pages/ work with relative image paths.
+function resolvePosterPath(poster) {
+    if (!poster) return poster;
+    // If poster is an absolute URL, return as-is
+    if (/^https?:\/\//i.test(poster)) return poster;
+    // If poster already starts with '/' treat as root-relative
+    if (poster.startsWith('/')) return poster;
+    // If poster is relative like 'images/...' and the current page is inside /pages/,
+    // prefix with '../' so it resolves to the images folder at project root.
+    try {
+        if (poster.startsWith('images/') && window.location.pathname.indexOf('/pages/') !== -1) {
+            return '../' + poster;
+        }
+    } catch (e) {
+        // ignore and return poster
+    }
+    return poster;
+}
+
 // Note: Server-side PHP sessions now control login state. The client-side
 // localStorage-based login and navbar toggling were removed so form submission
 // and PHP session handling operate without interference.
+
+// --- List management (per-user, stored in localStorage) ---
+function getChaveListasUsuario() {
+    return `listas_${getUsuario()}`;
+}
+
+function loadListsForUser() {
+    try {
+        return JSON.parse(localStorage.getItem(getChaveListasUsuario())) || [];
+    } catch (e) {
+        return [];
+    }
+}
+
+function saveListsForUser(listas) {
+    try {
+        localStorage.setItem(getChaveListasUsuario(), JSON.stringify(listas || []));
+        return { ok: true };
+    } catch (e) {
+        console.error('Erro ao salvar listas no localStorage', e);
+        return { ok: false, msg: 'Erro ao salvar listas no navegador' };
+    }
+}
+
+function createList(nome) {
+    console.log('DEBUG: createList called with', nome);
+    if (!nome || !nome.trim()) return { ok: false, msg: 'Nome vazio' };
+    const listas = loadListsForUser();
+    if (listas.some(l => l.name.toLowerCase() === nome.trim().toLowerCase())) return { ok: false, msg: 'Já existe uma lista com esse nome' };
+    listas.push({ name: nome.trim(), filmes: [] });
+    const saved = saveListsForUser(listas);
+    if (!saved.ok) return { ok: false, msg: saved.msg };
+    renderLists();
+    return { ok: true };
+}
+
+function deleteList(idx) {
+    const listas = loadListsForUser();
+    if (idx < 0 || idx >= listas.length) return;
+    listas.splice(idx, 1);
+    saveListsForUser(listas);
+    renderLists();
+}
+
+function editList(idx, novoNome) {
+    const listas = loadListsForUser();
+    if (idx < 0 || idx >= listas.length) return { ok: false, msg: 'Lista inválida' };
+    if (!novoNome || !novoNome.trim()) return { ok: false, msg: 'Nome vazio' };
+    // avoid duplicate names
+    if (listas.some((l, i) => i !== idx && l.name.toLowerCase() === novoNome.trim().toLowerCase())) return { ok: false, msg: 'Já existe uma lista com esse nome' };
+    listas[idx].name = novoNome.trim();
+    saveListsForUser(listas);
+    renderLists();
+    return { ok: true };
+}
+
+function addMovieToList(listIdx, movieTitle) {
+    const listas = loadListsForUser();
+    if (listIdx < 0 || listIdx >= listas.length) return { ok: false, msg: 'Lista inválida' };
+    const lista = listas[listIdx];
+    if (!lista.filmes.includes(movieTitle)) {
+        lista.filmes.push(movieTitle);
+        saveListsForUser(listas);
+        renderLists();
+        return { ok: true };
+    }
+    return { ok: false, msg: 'Filme já presente na lista' };
+}
+
+function removeMovieFromList(listIdx, movieTitle) {
+    const listas = loadListsForUser();
+    if (listIdx < 0 || listIdx >= listas.length) return;
+    const lista = listas[listIdx];
+    const i = lista.filmes.indexOf(movieTitle);
+    if (i >= 0) {
+        lista.filmes.splice(i, 1);
+        saveListsForUser(listas);
+        renderLists();
+    }
+}
+
+function renderLists() {
+    const container = document.getElementById('listas-container');
+    const pageContainer = document.getElementById('listas-page');
+    const listas = loadListsForUser();
+
+    const renderInto = (el) => {
+        if (!el) return;
+        if (listas.length === 0) {
+            el.innerHTML = '<p>Você ainda não tem listas criadas.</p>';
+            return;
+        }
+        let html = '<div class="user-lists">';
+        listas.forEach((l, idx) => {
+            html += `<div class="user-list" style="border:1px solid #233a6a;padding:0.6rem;border-radius:8px;margin-bottom:0.6rem;">
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <strong>${escapeHtml(l.name)}</strong>
+                    <div>
+                        <button class="edit-list-btn" data-idx="${idx}" style="background:#233a6a;color:#fff;border:none;padding:0.25rem 0.5rem;border-radius:6px;margin-right:0.4rem;">Editar</button>
+                        <button class="del-list-btn" data-idx="${idx}" style="background:#ff4444;color:#fff;border:none;padding:0.25rem 0.5rem;border-radius:6px;margin-right:0.4rem;">Excluir</button>
+                    </div>
+                </div>
+                <div style="margin-top:0.5rem;">
+                    ${l.filmes.length === 0 ? '<small>Nenhum filme nesta lista.</small>' : '<ul>' + l.filmes.map(f => `<li style="display:flex;justify-content:space-between;align-items:center;"><span>${escapeHtml(f)}</span><button class="remove-movie-from-list" data-list="${idx}" data-movie="${escapeHtml(f)}" style="background:#d23;color:#fff;border:none;padding:0.15rem 0.4rem;border-radius:6px;">Remover</button></li>`).join('') + '</ul>'}
+                </div>
+            </div>`;
+        });
+        html += '</div>';
+        el.innerHTML = html;
+
+        // attach delete/list remove handlers
+        el.querySelectorAll('.edit-list-btn').forEach(b => b.addEventListener('click', () => {
+            const idx = parseInt(b.getAttribute('data-idx'));
+            const listasLocal = loadListsForUser();
+            const current = listasLocal[idx] && listasLocal[idx].name ? listasLocal[idx].name : '';
+            const novo = prompt('Novo nome para a lista:', current);
+            if (novo === null) return;
+            const res = editList(idx, novo);
+            if (!res.ok) alert(res.msg || 'Falha ao renomear lista');
+        }));
+
+        el.querySelectorAll('.del-list-btn').forEach(b => b.addEventListener('click', () => {
+            const idx = parseInt(b.getAttribute('data-idx'));
+            if (confirm('Excluir esta lista?')) deleteList(idx);
+        }));
+
+        el.querySelectorAll('.remove-movie-from-list').forEach(b => b.addEventListener('click', () => {
+            const listIdx = parseInt(b.getAttribute('data-list'));
+            const movieTitle = b.getAttribute('data-movie');
+            if (confirm('Remover este filme da lista?')) removeMovieFromList(listIdx, movieTitle);
+        }));
+    };
+
+    renderInto(container);
+    // also render on listas page if present
+    renderInto(pageContainer);
+
+    // update any list select on the listas page
+    try {
+        const sel = document.getElementById('adicionar-filme-lista');
+        if (sel) {
+            sel.innerHTML = '';
+            if (listas.length === 0) {
+                const opt = document.createElement('option');
+                opt.text = 'Nenhuma lista disponível';
+                opt.value = '';
+                sel.appendChild(opt);
+                sel.disabled = true;
+            } else {
+                listas.forEach((l, idx) => {
+                    const opt = document.createElement('option');
+                    opt.value = String(idx);
+                    opt.text = l.name;
+                    sel.appendChild(opt);
+                });
+                sel.disabled = false;
+            }
+        }
+    } catch (e) { console.error('Erro ao popular select de listas', e); }
+}
+
+function ensureListStatusElement() {
+    try {
+        let el = document.getElementById('listas-status');
+        if (!el) {
+            // try to insert under listas-container or listas-section
+            const container = document.getElementById('listas-container') || document.getElementById('listas-section') || document.getElementById('listas-page');
+            if (container) {
+                el = document.createElement('div');
+                el.id = 'listas-status';
+                el.style.marginTop = '0.5rem';
+                container.parentNode.insertBefore(el, container.nextSibling);
+            }
+        }
+        return el;
+    } catch (e) { console.error('Erro ao garantir status element', e); return null; }
+}
+
+function showListStatus(msg, isError) {
+    const el = ensureListStatusElement();
+    if (!el) {
+        // fallback to alert
+        if (isError) alert(msg);
+        return;
+    }
+    el.textContent = msg;
+    el.style.color = isError ? '#ff4444' : '#22c55e';
+    // remove after 4s
+    setTimeout(() => { if (el) el.textContent = ''; }, 4000);
+}
+
+// Document-level fallback click handler removed to prevent duplicate creates.
+
+// Listen for storage events so other tabs/windows update their UI immediately
+window.addEventListener('storage', (ev) => {
+    try {
+        const key = ev.key;
+        if (!key) return;
+        // react only when user's listas key changed
+        const expectedPrefix = `listas_${getUsuario()}`;
+        if (key === expectedPrefix) {
+            console.log('DEBUG: storage event - listas changed, re-rendering');
+            renderLists();
+        }
+    } catch (e) { console.error('Error handling storage event', e); }
+});
+
+// initialize create-list UI and render lists when profile is present
+function initListUI() {
+    try {
+        const criarBtn = document.getElementById('criar-lista-btn');
+        const novaNome = document.getElementById('nova-lista-nome');
+        if (criarBtn && novaNome) {
+            // avoid double-binding
+            if (!criarBtn._hasInit) {
+                criarBtn.addEventListener('click', () => {
+                    // prevent duplicate handling if another handler is already processing
+                    if (criarBtn._creating) {
+                        console.log('DEBUG: criar-lista-btn click ignored, already processing');
+                        return;
+                    }
+                    criarBtn._creating = true;
+                    try {
+                        console.log('DEBUG: criar-lista-btn clicked');
+                        const nome = novaNome.value || '';
+                        console.log('DEBUG: criar-lista - nome=', nome);
+                        const res = createList(nome);
+                        console.log('DEBUG: criar-lista - result=', res);
+                        if (!res.ok) {
+                            showListStatus(res.msg || 'Falha ao criar lista', true);
+                            return;
+                        }
+                        novaNome.value = '';
+                        showListStatus('Lista criada com sucesso', false);
+                    } catch (err) {
+                        console.error('Erro no handler criar-lista-btn', err);
+                        alert('Ocorreu um erro ao criar a lista (ver console)');
+                    } finally {
+                        criarBtn._creating = false;
+                    }
+                });
+                criarBtn._hasInit = true;
+            }
+        }
+
+        // render lists on load if containers exist
+        renderLists();
+    } catch (err) {
+        console.error('Error initializing list UI', err);
+    }
+}
+
+// Try to initialize immediately (defer scripts should execute after DOM is parsed,
+// but initialize again on DOMContentLoaded to be resilient).
+try { initListUI(); } catch (e) { console.error('initListUI immediate failed', e); }
+document.addEventListener('DOMContentLoaded', initListUI);
+
+// Global inline fallback removed. Rely on the single bound handler in initListUI.
+
+// Wire adicionar-filme button on listas page
+function initAddMovieToListUI() {
+    try {
+        const addBtn = document.getElementById('adicionar-filme-btn');
+        const input = document.getElementById('adicionar-filme-nome');
+        const sel = document.getElementById('adicionar-filme-lista');
+        if (!addBtn || !input || !sel) return;
+        if (addBtn._hasInit) return;
+        addBtn.addEventListener('click', () => {
+            const title = (input.value || '').trim();
+            if (!title) { alert('Digite o título do filme'); return; }
+            const idx = parseInt(sel.value);
+            if (isNaN(idx)) { alert('Selecione uma lista válida'); return; }
+            const res = addMovieToList(idx, title);
+            if (res.ok) {
+                alert(`Filme "${title}" adicionado à lista.`);
+                input.value = '';
+            } else {
+                alert(res.msg || 'Falha ao adicionar filme.');
+            }
+        });
+        addBtn._hasInit = true;
+    } catch (e) { console.error('Erro no initAddMovieToListUI', e); }
+}
+
+try { initAddMovieToListUI(); } catch (e) { console.error('initAddMovieToListUI immediate failed', e); }
+document.addEventListener('DOMContentLoaded', () => { initAddMovieToListUI(); });
+
 
 // lógica de perfil page
 function atualizarPerfil() {
@@ -114,7 +420,7 @@ function atualizarPerfil() {
         filmesAssistidos.forEach((f, idx) => {
             // try to find poster by searching filmes array
             const found = filmes.find(x => x.titulo === f.titulo) || {};
-            const poster = found.poster || 'images/jovememchamas.jpg.avif';
+            const poster = resolvePosterPath(found.poster || 'images/jovememchamas.jpg.avif');
             const rating = f.ranking || 0;
             html += `
                 <div class="movie-card" style="display:flex;gap:1rem;align-items:center;">
@@ -175,6 +481,27 @@ function atualizarPerfil() {
             });
         });
     });
+
+    // attach handlers for 'Adicionar à lista' buttons
+    const addToListButtons = profileInfo.querySelectorAll('.add-to-list-btn');
+    addToListButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const idx = parseInt(btn.getAttribute('data-idx'));
+            const filmesAssistidosLocal = JSON.parse(localStorage.getItem(getChaveFilmesUsuario())) || [];
+            const movieTitle = filmesAssistidosLocal[idx] && filmesAssistidosLocal[idx].titulo ? filmesAssistidosLocal[idx].titulo : null;
+            if (!movieTitle) { alert('Filme não encontrado'); return; }
+            const listas = loadListsForUser();
+            if (!listas || listas.length === 0) { alert('Você não tem listas. Crie uma lista primeiro.'); return; }
+            const opts = listas.map((l,i) => `${i+1}) ${l.name}`).join('\n');
+            const escolha = prompt('Escolha a lista para adicionar:\n' + opts);
+            if (!escolha) return;
+            const n = parseInt(escolha);
+            if (isNaN(n) || n < 1 || n > listas.length) { alert('Escolha inválida.'); return; }
+            const res = addMovieToList(n-1, movieTitle);
+            if (res.ok) alert(`"${movieTitle}" adicionado à lista "${listas[n-1].name}"`);
+            else alert(res.msg || 'Não foi possível adicionar o filme à lista.');
+        });
+    });
 }
 if (document.getElementById('profile-username') && document.getElementById('profile-info')) {
     atualizarPerfil();
@@ -203,7 +530,7 @@ if (filme) {
     const avaliacaoEl = document.getElementById('avaliacao');
 
     if (tituloEl) tituloEl.textContent = filme.titulo;
-    if (posterEl) posterEl.src = filme.poster;
+    if (posterEl) posterEl.src = resolvePosterPath(filme.poster);
     if (descricaoEl) descricaoEl.textContent = filme.descricao;
     if (diretorEl) diretorEl.textContent = filme.diretor;
     if (anoEl) anoEl.textContent = filme.anolancamento;
@@ -234,6 +561,24 @@ if (btnAdicionar) {
             assistidos.push({ titulo: filme.titulo, ranking: 0, comment: comentario });
             localStorage.setItem(getChaveFilmesUsuario(), JSON.stringify(assistidos));
             alert("Filme adicionado ao perfil!");
+            // Offer to add the newly added movie to one of the user's lists
+            const listas = loadListsForUser();
+            if (listas && listas.length > 0) {
+                if (confirm('Deseja adicionar este filme a uma das suas listas?')) {
+                    const opts = listas.map((l,i) => `${i+1}) ${l.name}`).join('\n');
+                    const escolha = prompt('Escolha a lista para adicionar:\n' + opts);
+                    if (escolha) {
+                        const n = parseInt(escolha);
+                        if (!isNaN(n) && n >= 1 && n <= listas.length) {
+                            const res = addMovieToList(n-1, filme.titulo);
+                            if (res.ok) alert(`Filme adicionado à lista "${listas[n-1].name}"`);
+                            else alert(res.msg || 'Não foi possível adicionar o filme à lista.');
+                        } else {
+                            alert('Escolha inválida.');
+                        }
+                    }
+                }
+            }
         } else {
             alert("Filme já adicionado!");
         }

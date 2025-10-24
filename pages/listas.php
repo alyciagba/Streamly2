@@ -1,5 +1,11 @@
 <?php
 // Página Listas
+if (session_status() === PHP_SESSION_NONE) {
+	session_start();
+}
+
+$nomeUsuario = $_SESSION['usuario'] ?? null;
+$fotoUsuario = $_SESSION['foto'] ?? 'default.jpg';
 ?>
 <!DOCTYPE html>
 <html lang="pt-br">
@@ -19,8 +25,25 @@
 		<h2 class="text-2xl font-bold mb-4">Listas de Filmes</h2>
 		<div id="listas-page">
 			<p>Aqui você pode ver suas listas de filmes.</p>
+			<?php if ($nomeUsuario): ?>
+				<div style="margin-top:1rem;display:flex;gap:0.5rem;align-items:center;">
+					<select id="adicionar-filme-lista" style="padding:0.4rem;border-radius:6px;background:#0f1724;color:#e0e6f0;border:1px solid #233a6a;"></select>
+					<input id="adicionar-filme-nome" type="text" placeholder="Título do filme" style="padding:0.4rem;border-radius:6px;background:#0f1724;color:#e0e6f0;border:1px solid #233a6a;flex:1;" />
+					<button id="adicionar-filme-btn" class="bg-blue-600 text-white px-3 py-1 rounded">Adicionar</button>
+				</div>
+			<?php else: ?>
+				<p>Você precisa estar logado para gerenciar listas. <a href="login.php">Entrar</a></p>
+			<?php endif; ?>
 		</div>
 	</section>
+	<script>
+		<?php if ($nomeUsuario): ?>
+		window.currentUser = <?= json_encode($nomeUsuario) ?>;
+		try {
+			if (!localStorage.getItem('usuario')) localStorage.setItem('usuario', <?= json_encode($nomeUsuario) ?>);
+		} catch (e) {}
+		<?php endif; ?>
+	</script>
 </main>
 
 <?php include '../includes/footer.php'; ?>
