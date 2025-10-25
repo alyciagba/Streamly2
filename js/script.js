@@ -1,4 +1,3 @@
-
 let filmes = window.filmes || [];
 
 function ensureFilmesLoaded() {
@@ -35,9 +34,14 @@ function getUsuario() {
     return 'Convidado';
 }
 
+
 function getChaveFilmesUsuario() {
     return `filmesAssistidos_${getUsuario()}`;
 }
+
+
+// retorna a chave usada no localstorage para armazenar os filmes
+// assistidos do usuário atual tipo:filmesAssistidos_Maria
 
 function escapeHtml(str) {
     if (!str) return '';
@@ -49,6 +53,7 @@ function escapeHtml(str) {
         .replace(/'/g, '&#39;');
 }
 
+// ajusta os caminhos de posters e escapa caracteres especiais nas urls 
 
 function resolvePosterPath(poster) {
     if (!poster) return poster;
@@ -68,13 +73,12 @@ function resolvePosterPath(poster) {
 }
 
 
-
-
-
-
 function getChaveListasUsuario() {
     return `listas_${getUsuario()}`;
 }
+
+
+// retorna a chave usada no localStorage para armazenar as listas do usuario atual
 
 function loadListsForUser() {
     try {
@@ -83,6 +87,9 @@ function loadListsForUser() {
         return [];
     }
 }
+
+
+// le as listas do usuário do localStorage e retorna um array.
 
 function saveListsForUser(listas) {
     try {
@@ -93,6 +100,9 @@ function saveListsForUser(listas) {
         return { ok: false, msg: 'Erro ao salvar listas no navegador' };
     }
 }
+
+
+// persiste o array de listas no localStorage para o usuário atual.
 
 function createList(nome) {
     if (!nome || !nome.trim()) return { ok: false, msg: 'Nome vazio' };
@@ -105,6 +115,10 @@ function createList(nome) {
     return { ok: true };
 }
 
+
+// cria uma nova lista local para o usuário valida nome não vazio
+// e evita nomes duplicados (case-insensitive salva e re-renderiza.
+
 function deleteList(idx) {
     const listas = loadListsForUser();
     if (idx < 0 || idx >= listas.length) return;
@@ -112,6 +126,9 @@ function deleteList(idx) {
     saveListsForUser(listas);
     renderLists();
 }
+
+
+// remove a lista de índice e atualiza armazenamento
 
 function editList(idx, novoNome) {
     const listas = loadListsForUser();
@@ -124,6 +141,9 @@ function editList(idx, novoNome) {
     renderLists();
     return { ok: true };
 }
+
+
+// renomeia a lista no índice `idx` para `novoNome` após validações
 
 function addMovieToList(listIdx, movieTitle) {
     const listas = loadListsForUser();
@@ -138,6 +158,11 @@ function addMovieToList(listIdx, movieTitle) {
     return { ok: false, msg: 'Filme já presente na lista' };
 }
 
+
+// adiciona `movieTitle` a  lista de índice `listIdx` caso não exista.
+// salva e re-renderiza
+
+
 function removeMovieFromList(listIdx, movieTitle) {
     const listas = loadListsForUser();
     if (listIdx < 0 || listIdx >= listas.length) return;
@@ -149,6 +174,9 @@ function removeMovieFromList(listIdx, movieTitle) {
         renderLists();
     }
 }
+
+
+// remove um título de filme de uma lista (se presente), salva e re-renderiza.
 
 function renderLists() {
     const container = document.getElementById('listas-container');
@@ -266,6 +294,14 @@ function renderLists() {
     } catch (e) { console.error('Erro ao popular select de listas', e); }
 }
 
+
+// Renderiza as listas do usuário em dois locais possíveis:
+// visão compacta no perfil
+// visão completa na página de listas
+// para cada filme listado tenta resolver o poster consultando o array `filmes`.
+// após injetar o HTML, o método anexa handlers para editar/excluir/remover.
+
+
 function ensureListStatusElement() {
     try {
         let el = document.getElementById('listas-status');
@@ -282,6 +318,8 @@ function ensureListStatusElement() {
     } catch (e) { console.error('Erro ao garantir status element', e); return null; }
 }
 
+// garante que exista um elemento DOM para exibir mensagens de status
+
 function showListStatus(msg, isError) {
     const el = ensureListStatusElement();
     if (!el) {
@@ -295,6 +333,8 @@ function showListStatus(msg, isError) {
 }
 
 
+// mostra uma mensagem visual abaixo das listas.
+
 window.addEventListener('storage', (ev) => {
     try {
         const key = ev.key;
@@ -305,6 +345,10 @@ window.addEventListener('storage', (ev) => {
         }
     } catch (e) { console.error('Error handling storage event', e); }
 });
+
+
+// observa mudanças no localStorage vindas de outras abas e
+// re-renderiza as listas se a chave do usuário atual for alterada.
 
 function initListUI() {
     try {
@@ -342,6 +386,10 @@ function initListUI() {
         console.error('Error initializing list UI', err);
     }
 }
+
+
+// (botão criar + campo de nome) evita dupla ligação e concorrência.
+// também chama `renderLists()`
 
 try { initListUI(); } catch (e) { console.error('initListUI immediate failed', e); }
 document.addEventListener('DOMContentLoaded', initListUI);
@@ -473,8 +521,7 @@ ensureFilmesLoaded().then(() => {
     if (document.getElementById('profile-username') && document.getElementById('profile-info')) {
         atualizarPerfil();
     }
-    // Re-render lists after filmes are available so thumbnails/stars match the correct movie
-    try { renderLists(); } catch (e) { /* ignore if not present */ }
+    try { renderLists(); } catch (e) {  }
 
     const urlParams = new URLSearchParams(window.location.search);
     const movieId = urlParams.get('id');
