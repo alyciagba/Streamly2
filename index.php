@@ -41,7 +41,6 @@ if (file_exists($jsonPath)) {
                 <h3 class="text-lg font-semibold mt-2"><?= htmlspecialchars($filme['titulo']) ?></h3>
                 <p><?= htmlspecialchars($filme['diretor']) ?></p>
                 <p><?= htmlspecialchars($filme['anolancamento']) ?></p>
-                <p class="text-sm mt-1"><?= htmlspecialchars($filme['descricao']) ?></p>
                 <div class="mt-2">
                     <?php for($i=1; $i<=5; $i++): ?>
                         <span class="star <?= $i <= $filme['avaliacao'] ? 'filled' : '' ?>">&#9733;</span>
