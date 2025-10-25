@@ -1,16 +1,11 @@
 
-// Start with an empty array to avoid null-related crashes when parts of the UI
-// render before the JSON has been loaded. If server injects window.filmes it
-// will be used by ensureFilmesLoaded to populate this variable.
 let filmes = window.filmes || [];
 
 function ensureFilmesLoaded() {
     return new Promise((resolve, reject) => {
         if (Array.isArray(filmes) && filmes.length) return resolve(filmes);
-            // choose a robust path for data/filmes.json depending on current page path
-            // if we're in /pages/ we need to go one level up, otherwise use data/filmes.json
+            
             let jsonUrl = (window.location.pathname.indexOf('/pages/') !== -1) ? '../data/filmes.json' : 'data/filmes.json';
-            // Try the relative path first, if it fails try a few sensible fallbacks
             const tryFetch = (url) => fetch(url).then(r => {
                 if (!r.ok) throw new Error('fetch failed');
                 return r.json();
@@ -22,7 +17,6 @@ function ensureFilmesLoaded() {
                     resolve(filmes);
                 })
                 .catch(err => {
-                    // As a fallback, attempt an alternative absolute-relative path
                     const alt = (jsonUrl.startsWith('../') ? '/data/filmes.json' : '../data/filmes.json');
                     return tryFetch(alt).then(json => {
                         filmes = json || [];
